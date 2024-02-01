@@ -2246,4 +2246,24 @@ public class StringUtils {
 		}
 		return buf.toString();
 	}
+
+	public static String toString(String format, int[] array, int offset, int length, String separator) {
+		final var buf = new StringBuilder();
+
+		var first = true;
+		length = Math.min(offset + length, array.length);
+		for (var i = offset; i < length; i++) {
+			if (first)
+				first = false;
+			else
+				buf.append(separator);
+
+			buf.append(String.format(format, array[i]));
+		}
+		return buf.toString();
+	}
+
+	public static boolean containsIgnoreCase(Collection<String> list, String query) {
+		return list.stream().anyMatch(item -> item.equalsIgnoreCase(query));
+	}
 }
