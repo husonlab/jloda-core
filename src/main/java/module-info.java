@@ -1,5 +1,5 @@
 module jloda_core {
-	requires transitive java.desktop;
+	requires java.desktop;
 
 	exports jloda.graph;
 	exports jloda.graph.io;
