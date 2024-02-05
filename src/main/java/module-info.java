@@ -15,7 +15,6 @@ module jloda_core {
 	exports jloda.seq;
 	exports jloda.thirdparty;
 	exports jloda.resources;
-	opens jloda.resources.css;
 	opens jloda.resources.icons;
 	opens jloda.resources.icons.dialog;
 	opens jloda.resources.icons.sun;

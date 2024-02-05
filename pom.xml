@@ -28,7 +28,7 @@
     <artifactId>jloda-core</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <name>JlodaCore</name>
+    <name>jloda_core</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
