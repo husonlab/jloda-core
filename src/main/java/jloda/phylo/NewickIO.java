@@ -1,20 +1,20 @@
 /*
- * NewickIO.java Copyright (C) 2024 Daniel H. Huson
+ * NewickIO.java Copyright (C) 2023 Daniel H. Huson
  *
- *  (Some files contain contributions from other authors, who are then mentioned separately.)
+ * (Some files contain contributions from other authors, who are then mentioned separately.)
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -27,7 +27,10 @@ import jloda.graph.NodeIntArray;
 import jloda.util.*;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -83,7 +86,7 @@ public class NewickIO {
 	}
 
 	public static String toString(PhyloTree tree, boolean showWeights, boolean showConfidences, boolean showProbabilities) {
-		var format = new OutputFormat(showWeights, showConfidences, showConfidences, showProbabilities, false);
+		var format = new NewickIO.OutputFormat(showWeights, showConfidences, showConfidences, showProbabilities, false);
 		return new NewickIO().toBracketString(tree, format);
 	}
 
@@ -282,7 +285,7 @@ public class NewickIO {
 		var colons = 0;
 		if (format.weights() && tree.getWeight(e) != -1.0) {
 			if (tree.getEdgeWeights().containsKey(e)) {
-				buf.append(StringUtils.removeTrailingZerosAfterDot(String.format(":%.8f", tree.getWeight(e))));
+				buf.append(StringUtils.removeTrailingZerosAfterDot(String.format(format.weightFormat(), tree.getWeight(e))));
 				colons++;
 			}
 		}
@@ -291,14 +294,14 @@ public class NewickIO {
 				buf.append(":");
 				colons++;
 			}
-			buf.append(StringUtils.removeTrailingZerosAfterDot(String.format("%.8f", tree.getConfidence(e))));
+			buf.append(StringUtils.removeTrailingZerosAfterDot(String.format(format.confidenceFormat(), tree.getConfidence(e))));
 		}
 		if (format.probabilityUsingColon() && tree.hasEdgeProbabilities() && tree.getEdgeProbabilities().containsKey(e)) {
 			while (colons < 3) {
 				buf.append(":");
 				colons++;
 			}
-			buf.append(StringUtils.removeTrailingZerosAfterDot(String.format("%.8f", tree.getProbability(e))));
+			buf.append(StringUtils.removeTrailingZerosAfterDot(String.format(format.probabilityFormat(), tree.getProbability(e))));
 		}
 		if (format.edgeLabelsAsComments() && tree.getLabel(e) != null) {
 			buf.append("[").append(getLabelForWriting(e)).append("]");
@@ -833,11 +836,19 @@ public class NewickIO {
 	}
 
 	public static class OutputFormat {
-		private final boolean weights;
-		private final boolean confidenceAsNodeLabel;
-		private final boolean confidenceUsingColon;
-		private final boolean probabilityUsingColon;
-		private final boolean edgeLabelsAsComments;
+		private boolean weights;
+
+		private String weightFormat = "%.8f";
+		private boolean confidenceAsNodeLabel;
+		private boolean confidenceUsingColon;
+
+		private String confidenceFormat = "%.8f";
+
+		private boolean probabilityUsingColon;
+
+		private String probabilityFormat = "%.8f";
+
+		private boolean edgeLabelsAsComments;
 
 		public OutputFormat(boolean weights, boolean confidenceAsNodeLabel, boolean confidenceUsingColon,
 							boolean probabilityUsingColon, boolean edgeLabelsAsComments) {
@@ -868,49 +879,48 @@ public class NewickIO {
 			return edgeLabelsAsComments;
 		}
 
-		@Override
-		public boolean equals(Object obj) {
-			if (obj == this) return true;
-			if (obj == null || obj.getClass() != this.getClass()) return false;
-			var that = (OutputFormat) obj;
-			return this.weights == that.weights &&
-				   this.confidenceAsNodeLabel == that.confidenceAsNodeLabel &&
-				   this.confidenceUsingColon == that.confidenceUsingColon &&
-				   this.probabilityUsingColon == that.probabilityUsingColon &&
-				   this.edgeLabelsAsComments == that.edgeLabelsAsComments;
+		public void setWeights(boolean weights) {
+			this.weights = weights;
 		}
 
-		@Override
-		public int hashCode() {
-			return Objects.hash(weights, confidenceAsNodeLabel, confidenceUsingColon, probabilityUsingColon, edgeLabelsAsComments);
+		public void setConfidenceAsNodeLabel(boolean confidenceAsNodeLabel) {
+			this.confidenceAsNodeLabel = confidenceAsNodeLabel;
 		}
 
-		@Override
-		public String toString() {
-			return "OutputFormat[" +
-				   "weights=" + weights + ", " +
-				   "confidenceAsNodeLabel=" + confidenceAsNodeLabel + ", " +
-				   "confidenceUsingColon=" + confidenceUsingColon + ", " +
-				   "probabilityUsingColon=" + probabilityUsingColon + ", " +
-				   "edgeLabelsAsComments=" + edgeLabelsAsComments + ']';
+		public void setConfidenceUsingColon(boolean confidenceUsingColon) {
+			this.confidenceUsingColon = confidenceUsingColon;
 		}
-	}
 
-	public static void main(String[] args) throws IOException {
-		var newick = "(a40:0.0899376429,((a47:0.1357332613,((tei_1:0.0000021732,tei_2:0.0000021732)100:0.1172693229,uk6:0.0808904571)73:0.0221078288)62:0.0179176982,(((bal:0.1407598263,(dec_1:0.1259715854,(dec_2:0.0642686547,van:0.0607203380)100:0.0606318912)93:0.0321244472)100:0.0887287403,((ker:0.0077780118,nog:0.0025525455)100:0.1687566009,(ris:0.0522666677,risA:0.0548213374)100:0.1431814732)70:0.0279369285)73:0.0183299149,(((cor:1.0478535960,gp6:0.7479808257)99:0.2441475379,isocom:0.3338813419)66:0.0959063961,(mis:0.3248559905,rim:0.3091183550)85:0.1240669481)100:0.2858317671)81:0.0321174501)100:0.0997399456,a50:0.0588594162);";
+		public void setProbabilityUsingColon(boolean probabilityUsingColon) {
+			this.probabilityUsingColon = probabilityUsingColon;
+		}
 
-		var newickIO = new NewickIO();
-		newickIO.setAllowMultiLabeledNodes(false);
-		var tree = new PhyloTree();
-		newickIO.setNewickNodeCommentConsumer((v, c) -> {
-			if (c.startsWith("&&NHX:GN="))
-				tree.setName(c.substring(c.indexOf("=") + 1));
-		});
-		newickIO.parseBracketNotation(tree, newick, true, true);
-		System.err.println("isInputHasMultiLabels: " + newickIO.isInputHasMultiLabels());
-		System.err.println("hasEdgeWeights: " + tree.hasEdgeWeights());
-		System.err.println("hasEdgeConfidences: " + tree.hasEdgeConfidences());
-		System.err.println(tree.getName());
-		System.err.println(newickIO.toBracketString(tree, true));
+		public void setEdgeLabelsAsComments(boolean edgeLabelsAsComments) {
+			this.edgeLabelsAsComments = edgeLabelsAsComments;
+		}
+
+		public String weightFormat() {
+			return weightFormat;
+		}
+
+		public void setWeightFormat(String weightFormat) {
+			this.weightFormat = weightFormat;
+		}
+
+		public String confidenceFormat() {
+			return confidenceFormat;
+		}
+
+		public void setConfidenceFormat(String confidenceFormat) {
+			this.confidenceFormat = confidenceFormat;
+		}
+
+		public String probabilityFormat() {
+			return probabilityFormat;
+		}
+
+		public void setProbabilityFormat(String probabilityFormat) {
+			this.probabilityFormat = probabilityFormat;
+		}
 	}
 }
