@@ -45,10 +45,11 @@ public class NewickIO {
 	public static final String COLLAPSED_NODE_SUFFIX = "{+}";
 
 	public static boolean NUMBERS_ON_INTERNAL_NODES_ARE_CONFIDENCE_VALUES = true;
-
 	public boolean allowMultiLabeledNodes = true;
 
 	private final boolean cleanLabelsOnWrite;
+
+	private boolean numbersOnInternalNodesAreConfidenceValues = NUMBERS_ON_INTERNAL_NODES_ARE_CONFIDENCE_VALUES;
 
 	private boolean hideCollapsedSubTreeOnWrite = false;
 
@@ -499,7 +500,7 @@ public class NewickIO {
 					label = buf.toString().trim();
 
 					if (!label.isEmpty()) {
-						if (NUMBERS_ON_INTERNAL_NODES_ARE_CONFIDENCE_VALUES && NumberUtils.isDouble(label)) {
+						if (isNumbersOnInternalNodesAreConfidenceValues() && NumberUtils.isDouble(label)) {
 							confidenceValue.set(NumberUtils.parseDouble(label));
 						} else {
 							if (!isAllowMultiLabeledNodes() && seen.containsKey(label) && PhyloTreeNetworkIOUtils.findReticulateLabel(label) == null)
@@ -835,6 +836,14 @@ public class NewickIO {
 		this.newickNodeCommentSupplier = newickNodeCommentSupplier;
 	}
 
+	public boolean isNumbersOnInternalNodesAreConfidenceValues() {
+		return numbersOnInternalNodesAreConfidenceValues;
+	}
+
+	public void setNumbersOnInternalNodesAreConfidenceValues(boolean numbersOnInternalNodesAreConfidenceValues) {
+		this.numbersOnInternalNodesAreConfidenceValues = numbersOnInternalNodesAreConfidenceValues;
+	}
+
 	public static class OutputFormat {
 		private boolean weights;
 
@@ -922,5 +931,23 @@ public class NewickIO {
 		public void setProbabilityFormat(String probabilityFormat) {
 			this.probabilityFormat = probabilityFormat;
 		}
+	}
+
+	public static void main(String[] args) throws IOException {
+		var newick = "(a40:0.0899376429,((a47:0.1357332613,((tei_1:0.0000021732,tei_2:0.0000021732)100:0.1172693229,uk6:0.0808904571)73:0.0221078288)62:0.0179176982,(((bal:0.1407598263,(dec_1:0.1259715854,(dec_2:0.0642686547,van:0.0607203380)100:0.0606318912)93:0.0321244472)100:0.0887287403,((ker:0.0077780118,nog:0.0025525455)100:0.1687566009,(ris:0.0522666677,risA:0.0548213374)100:0.1431814732)70:0.0279369285)73:0.0183299149,(((cor:1.0478535960,gp6:0.7479808257)99:0.2441475379,isocom:0.3338813419)66:0.0959063961,(mis:0.3248559905,rim:0.3091183550)85:0.1240669481)100:0.2858317671)81:0.0321174501)100:0.0997399456,a50:0.0588594162);";
+
+		var newickIO = new NewickIO();
+		newickIO.setAllowMultiLabeledNodes(false);
+		var tree = new PhyloTree();
+		newickIO.setNewickNodeCommentConsumer((v, c) -> {
+			if (c.startsWith("&&NHX:GN="))
+				tree.setName(c.substring(c.indexOf("=") + 1));
+		});
+		newickIO.parseBracketNotation(tree, newick, true, true);
+		System.err.println("isInputHasMultiLabels: " + newickIO.isInputHasMultiLabels());
+		System.err.println("hasEdgeWeights: " + tree.hasEdgeWeights());
+		System.err.println("hasEdgeConfidences: " + tree.hasEdgeConfidences());
+		System.err.println(tree.getName());
+		System.err.println(newickIO.toBracketString(tree, true));
 	}
 }
