@@ -390,7 +390,7 @@ public class FileUtils {
 			default -> {
 				if (!fileName.contains(File.separator))
 					fileName = System.getProperty("user.dir") + File.separator + fileName;
-				
+
 				OutputStream outs = new FileOutputStream(fileName);
 				if (fileNameLowerCase.endsWith(".gz")) {
 					outs = new GZIPOutputStream(outs);
