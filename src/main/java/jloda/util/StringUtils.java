@@ -1503,25 +1503,15 @@ public class StringUtils {
 	 *
 	 * @return camel case
 	 */
-	public static String fromCamelCase(String string) {
-		final var buf = new StringBuilder();
-		if (string != null) {
-			var afterWhiteSpace = true;
-			var afterCapital = false;
-			for (var pos = 0; pos < string.length(); pos++) {
-				final var ch = string.charAt(pos);
-				if (Character.isUpperCase(ch)) {
-					if (!afterWhiteSpace && !afterCapital || (afterCapital && pos + 1 < string.length() && !Character.isUpperCase(string.charAt(pos + 1)))) {
-						buf.append(" ");
-					}
-					afterCapital = true;
-				} else
-					afterCapital = false;
-				buf.append(ch);
-				afterWhiteSpace = (Character.isWhitespace(ch));
+	public static String fromCamelCase(String input) {
+		var words = input.split("(?<!(^|[A-Z0-9]))(?=[A-Z0-9])|(?<!^)(?=[A-Z][a-z])");
+		var output = new StringBuilder();
+		for (var word : words) {
+			if (!word.isEmpty()) {
+				output.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(" ");
 			}
 		}
-		return buf.toString();
+		return output.toString().replaceAll("\\s\\s", " ").trim();
 	}
 
 	/**
