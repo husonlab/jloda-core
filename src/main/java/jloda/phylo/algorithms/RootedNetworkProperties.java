@@ -449,8 +449,13 @@ public class RootedNetworkProperties {
                             z = tree.newEdge(u, w);
                         else
                             z = tree.newEdge(w, u);
-                        tree.setWeight(z, tree.getWeight(f));
-                        tree.setConfidence(z, tree.getConfidence(f));
+                        if (tree.hasEdgeWeights())
+                            tree.setWeight(z, tree.getWeight(f));
+                        if (tree.hasEdgeConfidences())
+                            tree.setConfidence(z, tree.getConfidence(f));
+                        if (tree.hasEdgeProbabilities())
+                            tree.setProbability(z, tree.getProbability(f));
+
                         tree.setLabel(z, tree.getLabel(z));
                         if (needsContracting) {
                             edgesToContract.add(z);
