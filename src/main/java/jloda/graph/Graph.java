@@ -1817,13 +1817,17 @@ public class Graph extends GraphBase implements INamed {
      *
      * @param e to be contracted
      * @return remaining target node
+     * @todo: this appears to be broken
      */
     public Node contract(Edge e) {
         var s = e.getSource();
         var t = e.getTarget();
 
         // all edges adjacent to s are made adjacent to t:
-        for (var f : s.adjacentEdgesStream(false).filter(f -> f != e).toList()) {
+
+        deleteEdge(e);
+
+        for (var f : IteratorUtils.asList(s.adjacentEdges())) {
             if (f.getSource().equals(s))
                 f.changeSource(t);
             else if (f.getTarget().equals(s))
